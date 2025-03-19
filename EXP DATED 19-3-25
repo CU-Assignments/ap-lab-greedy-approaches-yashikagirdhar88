@@ -1,0 +1,185 @@
+1 AIM:- Maximum Units on a Truck
+PROGRAM:- class Solution {
+public:
+    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {
+        // Sort the boxTypes array in descending order based on the number of units per box
+        sort(boxTypes.begin(), boxTypes.end(), [](vector<int>& a, vector<int>& b) {
+            return a[1] > b[1]; // Sort in decreasing order based on units per box
+        });
+
+        int maxUnits = 0; // Variable to store the maximum number of units we can load
+        for (auto& box : boxTypes) {
+            int boxCount = min(truckSize, box[0]); // Take as many boxes as possible without exceeding truckSize
+            maxUnits += boxCount * box[1]; // Add the corresponding units to maxUnits
+            truckSize -= boxCount; // Reduce the remaining truck space
+            
+            if (truckSize == 0) break; // If truck is full, stop
+        }
+        
+        return maxUnits; // Return the maximum number of units that can be loaded
+    }
+};
+
+2 AIM:- Minimum Operations to Make the Array Increasing
+PROGRAM:- class Solution {
+public:
+    int minOperations(vector<int>& nums) {
+        int operations = 0; // To count the number of operations needed
+
+        for (int i = 1; i < nums.size(); i++) { 
+            if (nums[i] <= nums[i - 1]) { 
+                int increment = (nums[i - 1] - nums[i]) + 1; // Calculate required increment
+                nums[i] += increment; // Make nums[i] greater than nums[i-1]
+                operations += increment; // Add increment count to total operations
+            }
+        }
+
+        return operations; // Return the total operations needed
+    }
+};
+
+3 AIM:- Remove Stones to Minimize the Total
+PROGRAM:- class Solution {
+public:
+    int minStoneSum(vector<int>& piles, int k) {
+        priority_queue<int> maxHeap(piles.begin(), piles.end()); // Max heap to always get the largest pile
+        int totalSum = 0;
+
+        for (int stone : piles) {
+            totalSum += stone; // Compute initial sum of stones
+        }
+
+        while (k--) {
+            int largest = maxHeap.top(); // Get the largest pile
+            maxHeap.pop(); // Remove it from the heap
+            int removed = largest / 2; // Compute the stones to remove
+            totalSum -= removed; // Reduce from total sum
+            maxHeap.push(largest - removed); // Push the reduced pile back into the heap
+        }
+
+        return totalSum; // Return the minimized sum
+    }
+};
+4 AIM:- Maximum Score From Removing Substrings
+PROGRAM:- class Solution {
+public:
+    int maximumGain(string s, int x, int y) {
+        // Ensure we remove the more valuable pair first
+        char first1 = 'a', first2 = 'b'; // Default "ab"
+        if (y > x) {
+            swap(x, y);
+            swap(first1, first2); // Swap to prioritize "ba"
+        }
+
+        int score = 0;
+        stack<char> st;
+
+        // Step 1: Remove the more valuable pair first
+        string remaining;
+        for (char c : s) {
+            if (!st.empty() && st.top() == first1 && c == first2) {
+                st.pop();
+                score += x;
+            } else {
+                st.push(c);
+            }
+        }
+
+        // Store remaining characters for next pass
+        while (!st.empty()) {
+            remaining += st.top();
+            st.pop();
+        }
+        reverse(remaining.begin(), remaining.end());
+
+        // Step 2: Remove the less valuable pair
+        for (char c : remaining) {
+            if (!st.empty() && st.top() == first2 && c == first1) {
+                st.pop();
+                score += y;
+            } else {
+                st.push(c);
+            }
+        }
+
+        return score;
+    }
+};
+5 AIM:- Minimum Operations to Make a Subsequence
+PROGRAM:- class Solution {
+public:
+    int minOperations(vector<int>& target, vector<int>& arr) {
+        unordered_map<int, int> indexMap; // Stores index positions of target elements
+        
+        // Step 1: Map each element in `target` to its index
+        for (int i = 0; i < target.size(); i++) {
+            indexMap[target[i]] = i;
+        }
+
+        vector<int> seq; // Stores valid indices to find LIS
+        
+        // Step 2: Convert `arr` elements to corresponding indices in `target`
+        for (int num : arr) {
+            if (indexMap.find(num) != indexMap.end()) {
+                seq.push_back(indexMap[num]); // Convert to target index
+            }
+        }
+
+        // Step 3: Find LIS length in `seq`
+        vector<int> lis;
+        for (int num : seq) {
+            auto it = lower_bound(lis.begin(), lis.end(), num);
+            if (it == lis.end()) {
+                lis.push_back(num);
+            } else {
+                *it = num; // Replace element for better LIS
+            }
+        }
+
+        // Step 4: Return the number of insertions needed
+        return target.size() - lis.size();
+    }
+};
+6 AIM:- Maximum Number of Tasks You Can Assign
+PROGRAM:- class Solution {
+public:
+    bool canComplete(int mid, vector<int>& tasks, vector<int>& workers, int pills, int strength) {
+        multiset<int> availableWorkers(workers.end() - mid, workers.end()); // Strongest `mid` workers
+
+        for (int i = mid - 1; i >= 0; i--) {
+            auto it = availableWorkers.lower_bound(tasks[i]); // Find worker ≥ task[i]
+
+            if (it == availableWorkers.end()) { 
+                // No worker strong enough, try using a pill
+                if (pills == 0) return false;
+
+                it = availableWorkers.lower_bound(tasks[i] - strength); 
+                if (it == availableWorkers.end()) return false; // No valid worker even with pill
+                
+                pills--; // Use one pill
+            }
+            availableWorkers.erase(it); // Assign the worker
+        }
+
+        return true;
+    }
+
+    int maxTaskAssign(vector<int>& tasks, vector<int>& workers, int pills, int strength) {
+        sort(tasks.begin(), tasks.end());
+        sort(workers.begin(), workers.end());
+
+        int left = 0, right = min(tasks.size(), workers.size()), result = 0;
+
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (canComplete(mid, tasks, workers, pills, strength)) {
+                result = mid; // Try more tasks
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return result;
+    }
+};
